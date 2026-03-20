@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🎙️ AudioToText — Whisper</title>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+</head>
+<body>
+  <header>
+    <div class="logo">🎙️ AudioToText</div>
+    <nav>
+      <a href="/">Transcribir</a>
+      <a href="/history">Historial</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Transcripción de Audio con <span class="highlight">Whisper</span></h1>
+      <p>Sube tu archivo de audio o vídeo y obtén la transcripción en segundos.<br>
+         Soporta más de 90 idiomas gracias a OpenAI Whisper.</p>
+    </section>
+
+    <!-- Zona de subida -->
+    <div class="card upload-card" id="uploadCard">
+      <div class="drop-zone" id="dropZone">
+        <div class="drop-icon">📂</div>
+        <p class="drop-text">Arrastra tu archivo aquí o <label for="fileInput" class="browse-link">haz clic para explorar</label></p>
+        <p class="drop-hint">MP3, WAV, MP4, OGG, M4A, FLAC y más — hasta 500 MB</p>
+        <input type="file" id="fileInput" accept="audio/*,video/*" hidden/>
+      </div>
+      <div class="selected-file hidden" id="selectedFile">
+        <span class="file-icon">🎵</span>
+        <span id="selectedFileName">archivo.mp3</span>
+        <button class="btn-icon" id="removeFile" title="Eliminar">✕</button>
+      </div>
+    </div>
+
+    <!-- Opciones -->
+    <div class="card options-card">
+      <h2>⚙️ Opciones</h2>
+      <div class="options-grid">
+        <div class="option-group">
+          <label for="modelSelect">Modelo Whisper</label>
+          <select id="modelSelect">
+            {% for m in models %}
+            <option value="{{ m }}" {% if m == 'tiny' %}selected{% endif %}>{{ m }}</option>
+            {% endfor %}
+          </select>
+          <span class="hint">
+            tiny (~39 MB) = más rápido · base (~74 MB) = más preciso
+          </span>
+        </div>
+
+        <div class="option-group">
+          <label for="taskSelect">Tarea</label>
+          <select id="taskSelect">
+            <option value="transcribe" selected>Transcribir (idioma original)</option>
+            <option value="translate">Traducir a Inglés</option>
+          </select>
+        </div>
+
+        <div class="option-group">
+          <label for="languageSelect">Idioma de origen</label>
+          <select id="languageSelect">
+            {% for lang in languages %}
+            <option value="{{ lang }}" {% if lang == 'Auto-Detect' %}selected{% endif %}>{{ lang }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="option-group">
+          <label>Formatos de salida</label>
+          <div class="checkbox-group">
+            {% for fmt in output_formats %}
+            <label class="checkbox-label">
+              <input type="checkbox" name="output_formats" value="{{ fmt }}"
+                     {% if fmt in ['txt', 'vtt', 'srt'] %}checked{% endif %}/>
+              <span class="checkbox-text">{{ fmt.upper() }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="option-group full-width">
+          <label for="promptInput">Prompt de contexto <span class="optional">(opcional)</span></label>
+          <input type="text" id="promptInput" placeholder="Ej: entrevista médica, vocabulario técnico..."/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botón transcribir -->
+    <div class="text-center">
+      <button class="btn-primary" id="transcribeBtn" disabled>
+        <span id="btnText">🎙️ Transcribir</span>
+      </button>
+    </div>
+
+    <!-- Panel de progreso -->
+    <div class="card progress-card hidden" id="progressCard">
+      <div class="progress-header">
+        <span id="progressStatus">Iniciando...</span>
+        <span id="progressPercent">0%</span>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="log-box" id="logBox"></div>
+    </div>
+
+    <!-- Resultado -->
+    <div class="card result-card hidden" id="resultCard">
+      <div class="result-header">
+        <h2>✅ Transcripción completada</h2>
+        <div class="result-meta" id="resultMeta"></div>
+      </div>
+      <div class="result-text-wrap">
+        <textarea id="resultText" readonly rows="10"></textarea>
+        <button class="btn-copy" id="copyBtn" title="Copiar al portapapeles">📋 Copiar</button>
+      </div>
+      <div class="download-section">
+        <h3>📥 Descargar archivos</h3>
+        <div class="download-buttons" id="downloadButtons"></div>
+      </div>
+      <div class="text-center" style="margin-top:1.5rem">
+        <button class="btn-secondary" id="newTranscriptionBtn">🔄 Nueva transcripción</button>
+      </div>
+    </div>
+
+    <!-- Error -->
+    <div class="card error-card hidden" id="errorCard">
+      <h2>❌ Error en la transcripción</h2>
+      <p id="errorMessage"></p>
+      <button class="btn-secondary" id="retryBtn">🔄 Intentar de nuevo</button>
+    </div>
+  </main>
+
+  <footer>
+    <p>Powered by <a href="https://github.com/openai/whisper" target="_blank">OpenAI Whisper</a>
+       · Basado en <a href="https://github.com/Carleslc/AudioToText" target="_blank">AudioToText</a></p>
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+# AudioToText Web — dependencias Python
+
+# Web framework
+flask>=3.0.0
+werkzeug>=3.0.0
+
+# Whisper (OpenAI) — transcripción local
+openai-whisper
+
+# Dependencias de Whisper
+torch --index-url https://download.pytorch.org/whl/cpu
+numpy
+numba
+more-itertools
+tiktoken
+scipy
+ffmpeg-python
+
+# Traducción DeepL (opcional)
+deepl>=1.16.0
+
+# OpenAI API (opcional, para usar modelo en cloud)
+openai>=1.9.0
+
+# Producción (servidor WSGI)
+gunicorn>=21.0.0

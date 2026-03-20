@@ -6,3 +6,15 @@
 
 /audio_transcription/
 !*/audio_transcription/
+
+# Web app
+uploads/
+.env
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+build/

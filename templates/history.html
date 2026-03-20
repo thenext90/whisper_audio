@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🕘 Historial — AudioToText</title>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+</head>
+<body>
+  <header>
+    <div class="logo">🎙️ AudioToText</div>
+    <nav>
+      <a href="/">Transcribir</a>
+      <a href="/history" class="active">Historial</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>🕘 Historial de transcripciones</h1>
+      <p>Todas las transcripciones realizadas en esta sesión.</p>
+    </section>
+
+    {% if jobs %}
+    <div class="history-list">
+      {% for job in jobs %}
+      <div class="card history-item status-{{ job.status }}">
+        <div class="history-header">
+          <div>
+            <strong>{{ job.filename }}</strong>
+            <span class="badge badge-{{ job.status }}">{{ job.status }}</span>
+          </div>
+          <div class="history-meta">
+            ID: <code>{{ job.id[:8] }}...</code>
+          </div>
+        </div>
+        {% if job.status == 'done' %}
+          <p class="history-text">{{ job.result_text[:300] }}{% if job.result_text|length > 300 %}...{% endif %}</p>
+          <div class="download-buttons">
+            {% for f in job.files %}
+            <a href="/download/{{ job.id }}/{{ f.filename }}" class="btn-download">
+              ⬇ {{ f.format.upper() }}
+            </a>
+            {% endfor %}
+          </div>
+        {% elif job.status == 'error' %}
+          <p class="error-text">{{ job.error }}</p>
+        {% else %}
+          <p class="muted">En progreso: {{ job.progress }}%</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="card text-center">
+      <p style="font-size:3rem">📭</p>
+      <p>No hay transcripciones todavía.</p>
+      <a href="/" class="btn-primary" style="display:inline-block;margin-top:1rem">Crear primera transcripción</a>
+    </div>
+    {% endif %}
+  </main>
+
+  <footer>
+    <p>Powered by <a href="https://github.com/openai/whisper" target="_blank">OpenAI Whisper</a>
+       · Basado en <a href="https://github.com/Carleslc/AudioToText" target="_blank">AudioToText</a></p>
+  </footer>
+</body>
+</html>
