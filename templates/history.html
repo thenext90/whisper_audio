@@ -17,9 +17,14 @@
   </header>
 
   <main>
+
     <section class="hero">
       <h1>🕘 Historial de transcripciones</h1>
       <p>Todas las transcripciones realizadas en esta sesión.</p>
+      <form method="post" style="margin-top:1.2rem">
+        <input type="hidden" name="action" value="clear" />
+        <button type="submit" class="btn-secondary" onclick="return confirm('¿Borrar historial y archivos subidos? Esta acción no se puede deshacer.');">🗑️ Borrar historial y archivos</button>
+      </form>
     </section>
 
     {% if jobs %}

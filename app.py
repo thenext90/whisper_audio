@@ -299,9 +299,19 @@ def download_file(job_id, filename):
     return send_from_directory(output_dir, filename, as_attachment=True)
 
 
-@app.route('/history')
+
+@app.route('/history', methods=['GET', 'POST'])
 @login_required
 def history():
+    if request.method == 'POST' and request.form.get('action') == 'clear':
+        # Borrar historial en memoria
+        jobs.clear()
+        # Borrar archivos subidos y transcripciones
+        import shutil
+        for folder in [app.config['UPLOAD_FOLDER'], app.config['OUTPUT_FOLDER']]:
+            shutil.rmtree(folder, ignore_errors=True)
+            os.makedirs(folder, exist_ok=True)
+        return redirect(url_for('history'))
     job_list = sorted(
         [j for j in jobs.values()],
         key=lambda x: x.get('created_at', 0),
