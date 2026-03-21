@@ -14,11 +14,28 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Directorio de trabajo
 WORKDIR /app
 
-# Copiar requirements e instalar dependencias Python
-COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu && \
-    pip install --no-cache-dir flask werkzeug gunicorn openai-whisper numpy numba more-itertools tiktoken ffmpeg-python deepl openai
+# Instalar dependencias Python por pasos para mejor cache
+RUN pip install --no-cache-dir --upgrade pip
+
+# PyTorch CPU primero (paquete más pesado)
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+
+# Resto de dependencias
+RUN pip install --no-cache-dir \
+    flask \
+    werkzeug \
+    gunicorn \
+    openai-whisper \
+    numpy \
+    numba \
+    more-itertools \
+    tiktoken \
+    ffmpeg-python \
+    deepl \
+    openai
+
+# Pre-descargar modelos Whisper (tiny y base) durante el build
+RUN python -c "import whisper; whisper.load_model('tiny'); whisper.load_model('base'); print('Modelos descargados OK')"
 
 # Copiar código fuente
 COPY . .
@@ -34,4 +51,4 @@ ENV FLASK_DEBUG=false
 ENV PORT=5000
 
 # Arrancar con gunicorn (producción)
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "600", "--worker-class", "sync", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--timeout", "600", "app:app"]
