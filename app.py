@@ -13,15 +13,30 @@ from pathlib import Path
 
 from flask import (
     Flask, render_template, request, jsonify,
-    send_from_directory, Response, stream_with_context
+    send_from_directory, Response, stream_with_context, redirect, url_for, session, flash
 )
 from werkzeug.utils import secure_filename
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'whisper-secret-key-2024')
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['OUTPUT_FOLDER'] = 'audio_transcription'
 app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500 MB
+
+# Login config
+LOGIN_USER = os.environ.get('LOGIN_USER', 'audio398')
+LOGIN_PASSWORD = os.environ.get('LOGIN_PASSWORD', 'Qw7!p9zR4@t2Lk8v')
+
+# Proteger rutas excepto login y health
+from functools import wraps
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('logged_in'):
+            return redirect(url_for('login', next=request.path))
+        return f(*args, **kwargs)
+    return decorated_function
 
 # Extensiones de audio/video soportadas
 ALLOWED_EXTENSIONS = {
@@ -184,7 +199,28 @@ def format_timestamp_srt(seconds):
 
 # ─── RUTAS ────────────────────────────────────────────────────────────────────
 
+
+# ─── LOGIN ─────────────────────────────
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = None
+    if request.method == 'POST':
+        username = request.form.get('username', '')
+        password = request.form.get('password', '')
+        if username == LOGIN_USER and password == LOGIN_PASSWORD:
+            session['logged_in'] = True
+            return redirect(url_for('index'))
+        else:
+            error = 'Usuario o contraseña incorrectos.'
+    return render_template('login.html', error=error)
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
 @app.route('/')
+@login_required
 def index():
     return render_template('index.html',
                            models=WHISPER_MODELS,
@@ -193,6 +229,7 @@ def index():
 
 
 @app.route('/upload', methods=['POST'])
+@login_required
 def upload_file():
     if 'audio' not in request.files:
         return jsonify({'error': 'No se recibió ningún archivo'}), 400
@@ -247,6 +284,7 @@ def upload_file():
 
 
 @app.route('/status/<job_id>')
+@login_required
 def job_status(job_id):
     job = jobs.get(job_id)
     if not job:
@@ -255,12 +293,14 @@ def job_status(job_id):
 
 
 @app.route('/download/<job_id>/<filename>')
+@login_required
 def download_file(job_id, filename):
     output_dir = os.path.join(app.config['OUTPUT_FOLDER'], job_id)
     return send_from_directory(output_dir, filename, as_attachment=True)
 
 
 @app.route('/history')
+@login_required
 def history():
     job_list = sorted(
         [j for j in jobs.values()],
